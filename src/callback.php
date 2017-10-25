@@ -16,7 +16,7 @@ if (empty($oauth_verifier) ||
     empty($_SESSION['oauth_token_secret'])
 ) {
     // something's missing, go and login again
-    header('Location: ' . $config['url_login']);
+    header('Location: ' . $config['login_url']);
 }
 // connect with application token
 $connection = new TwitterOAuth(
@@ -32,3 +32,5 @@ $token = $connection->oauth(
         'oauth_verifier' => $oauth_verifier
     ]
 );
+$_SESSION = $token;
+header('Location: ./index.php');

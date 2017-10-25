@@ -9,6 +9,6 @@ session_start();
 return array(
     'consumer_key'  =>  'zKhRKZyRmUBW5lVFciSQaqUC2',
     'consumer_secret' => 'TEDdsq7p3OeL3drlxGxvyGCxBvZ4ocUy6zUocm5AhkGuNYG5xg',
-    'login_url' =>  'http://104.154.71.228/src/index.php',
-    'callbackk_url' =>  'http://104.154.71.228/src/callback.php'
+    'login_url' =>  'http://localhost/www/twitterApp/src/index.php',
+    'callback_url' =>  'http://localhost/www/twitterApp/src/callback.php'
 );

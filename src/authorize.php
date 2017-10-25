@@ -6,7 +6,7 @@ $config = require_once './config.php';
 $twitteroauth = new TwitterOAuth($config['consumer_key'], $config['consumer_secret']);
 $request_token = $twitteroauth->oauth(
     'oauth/request_token', [
-        'oauth_callback' => $config['url_callback']
+        'oauth_callback' => $config['callback_url']
     ]
 );
 
