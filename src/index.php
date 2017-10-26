@@ -27,7 +27,7 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
         <![endif]-->
         <style type="text/css">
             .swiper-container {
-                width: 600px;
+                width: 100%;
                 height: 400px;
             }
             body{
@@ -42,7 +42,7 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
         echo '<a class="btn btn-info" href="autorize.php">LOGIN To twitter</a>';
        }else{ ?>
        <section class="col-sm-6 col-sm-offset-3">
-       <h1><?=$statuses[0]->user->screen_name;?> Tweets</h1>
+       <h1> Tweets</h1>
        <div class="swiper-container">
             <!-- Additional required wrapper -->
             <div class="swiper-wrapper">
@@ -74,7 +74,16 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
             <div class="swiper-scrollbar"></div>
         </div>
         </section>
-
+        <section class="col-sm-3">
+            <h1>Folowers</h1>
+            <?php foreach($followers->users as $follow){ ?>
+            <a href="#" class="followers btn btn-block btn-default" data-screen="<?=$follow->screen_name;?>">
+                <img src="<?=$follow->profile_image_url;?>" alt="">
+                <?=$follow->name;?><br>
+                <small><?=$follow->screen_name;?></small>
+            </a>
+            <?php } ?>
+        </section>
         <?php
         }
         ?>
