@@ -1,7 +1,7 @@
-<?php require('./fetchData.php'); 
+<?php require('fetchData.php'); 
 $tw = new TwitterApp();
-$statuses = $tw->fetch_tweets(); 
-$followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
+$statuses = @$tw->fetch_tweets(); 
+$followers = @$tw->fetch_followers($_SESSION['screen_name']); ?>
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -16,7 +16,7 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
 
         <!-- Optional theme -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.0/css/swiper.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.0/css/swiper.min.css">
 
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -33,13 +33,19 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
             body{
                 color: #000;
             }
+            #loginButton{
+                margin-top: 40%;
+            }
+            .swiper-slide{padding:0 25px;}
         </style>
     </head>
     <body class="container">
+        <!-- <pre><?=print_r($statuses);?></pre> -->
         <div class="row">
-       <!-- <pre><?=print_r($followers);?></pre> -->
        <?php if(!$statuses){
-        echo '<a class="btn btn-info" href="autorize.php">LOGIN To twitter</a>';
+        echo '<div class="text-center" id="loginButton">
+            <a href="router.php?call=authorize" class="btn btn-primary">Login Twitter</a>
+        </div>';
        }else{ ?>
        <section class="col-sm-6 col-sm-offset-3">
        <h1> Tweets</h1>
@@ -65,14 +71,10 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
                     </div>
                 <?php } ?>
             </div>
-         
-            <!-- If we need navigation buttons -->
-            <div class="swiper-button-prev"></div>
-            <div class="swiper-button-next"></div>
-         
             <!-- If we need scrollbar -->
             <div class="swiper-scrollbar"></div>
         </div>
+                <small>Swipe to view more</small>
         </section>
         <section class="col-sm-3">
             <h1>Folowers</h1>
@@ -84,6 +86,7 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
             </a>
             <?php } ?>
         </section>
+
         <?php
         }
         ?>
@@ -96,19 +99,18 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
     <script type="text/javascript">
         $(document).ready(function () {
             //initialize swiper when document ready
-            var mySwiper = new Swiper ('.swiper-container', {
-              // Optional parameters
-              direction: 'horizontal',
-              loop: true
-            });
+            initSlider();
             $(document).on('click','.followers', function(e){
                 e.preventDefault();
                 $screen_name = $(this).data('screen');
-                $.get('getTweets.php?screen='+$screen_name).then(function(data){
+                $.get('router.php?screen='+$screen_name+'&call=getTweets').then(function(data){
                     $('.swiper-wrapper').html('');
+                    if(data == '') $('.swiper-wrapper').append('<div class="swiper-slide"><h2>No tweets found</h2></div>');
                     $.each(data, function(k,tweet){
                         $('.swiper-wrapper').append(displayTweet(tweet));
+                        
                     });
+                    initSlider();
                 });
             });
           });
@@ -130,6 +132,17 @@ $followers = $tw->fetch_followers($statuses[0]->user->screen_name); ?>
                             '+media+'<br>\
                     </div>';
                     return template;
+        }
+        function initSlider(){
+            var mySwiper = new Swiper ('.swiper-container', {
+              // Optional parameters
+              direction: 'horizontal',
+              loop: true,
+                // And if we need scrollbar
+                scrollbar: {
+                  el: '.swiper-scrollbar',
+                },
+            });
         }
     </script>
     </body>
