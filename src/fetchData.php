@@ -39,7 +39,6 @@ class TwitterApp
 
     function authorize()
     {
-
         $request_token = $this->twitter->oauth(
             'oauth/request_token', [
                 'oauth_callback' => $this->config['callback_url']
@@ -55,7 +54,7 @@ class TwitterApp
         $_SESSION['oauth_token'] = $request_token['oauth_token'];
         $_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
 
-        print_r($_SESSION);die;
+        // print_r($_SESSION);die;
         // generate the URL to make request to authorize our application
         $url = $this->twitter->url(
             'oauth/authorize', [
