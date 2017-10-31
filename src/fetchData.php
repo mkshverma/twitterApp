@@ -118,14 +118,32 @@ class TwitterApp
 
     function download()
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
         if (!empty($_POST) && $_POST['screen'] != '' && $_POST['format'] != '') {
             $input = $_POST;
-            $followers = $this->twitter->get("followers/list", ["screen_name" => $input['screen']]);
-            foreach ($followers->users as $kk => $row)
-            {
-                $data[] = [$row->name,$row->screen_name];
+            $cursor = -1;
+            $ids = [];
+            $users = [];
+            $followers = [];
+            while ( $cursor != 0 ){
+                $temp = $this->twitter->get("followers/ids", ["screen_name" => $input['screen'],'cursor' => $cursor, 'count'=>5000]);
+                if(isset($temp->ids)){
+                    $ids = array_merge($ids, $temp->ids);
+                    $cursor = $temp->next_cursor;
+                }else{
+                    break;
+                }
             }
-//            print_r($data);
+            $chunks = array_chunk($ids, 100);
+            foreach ($chunks as $key => $value) {
+                $temp = $this->twitter->get("users/lookup", ['user_id'=>implode(',', $value)]);
+                $followers = array_merge($followers, $temp);
+            }
+            foreach ($followers as $kk => $row)
+            {
+                $users[] = [$row->name, $row->screen_name];
+            }
             if($input['format']=='csv')
             {
                 // output headers so that the file is downloaded rather than displayed
@@ -143,7 +161,7 @@ class TwitterApp
                 fputcsv($file, array('Name', 'Handler'));
 
                 // output each row of the data
-                foreach ($data as $row)
+                foreach ($users as $row)
                 {
                     fputcsv($file, $row);
                 }
@@ -155,7 +173,7 @@ class TwitterApp
                 header('Content-Type: text/xml');
                 $dom = new DomDocument();
                 $root = $dom->createElement('followers');
-                foreach ($data as $row)
+                foreach ($users as $row)
                 {
                     $user = $dom->createElement('User');
                     $name = $dom->createElement('name', $row[0]);
@@ -169,21 +187,59 @@ class TwitterApp
             }
             if($input['format']=='pdf') {
 
-                require(BASE_PATH.'lib/fpdf.php');
+                require(BASE_PATH.'lib/fpdf/fpdf.php');
 
                 $pdf = new FPDF();
                 $pdf->AddPage();
                 $pdf->SetFont('Arial','B',16);
-                $pdf->Cell(40,10,'Hello World!');
-                $pdf->Output();
+                $pdf->Cell(400,10,'Followers of @'.$input['screen'],0,1,'L');
+                $pdf->SetFont('Arial','',14);
+                foreach ($users as $k => $user) {
+                    $pdf->Cell( 400, 10, ($k+1).'. '.$user[0].' (@'.$user[1].')', 0, 1, 'L' );
+                }
+                $pdf->Output('D');
+            }
+            if($input['format']=='xls') {
+                require(BASE_PATH.'lib/PHPExcel/PHPExcel.php');
+                $objPHPExcel = new PHPExcel();
+                $sheet = $objPHPExcel->getActiveSheet();
+                $sheet->getStyle("A1:B200")->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+                // $sheet->getStyle("A1:A2")->applyFromArray(array("font" => array( "bold" => true)));
+                // $sheet->setCellValue('A1',"Followers List");
+                $sheet->setCellValue('A1',"Followers List");
+                $sheet->setCellValue('A2',"Name");
+                $sheet->setCellValue('B2',"Handler");
+                $x=2;
+                foreach ($users as $key => $value) {
+                    $sheet->setCellValue('A' . $x, $value[0] );
+                    $sheet->setCellValue('B' . $x, '@'.$value[1] );
+                    $x++;
+                }
+                $sheet->getColumnDimension('A')->setAutoSize(true);
+                $sheet->getColumnDimension('B')->setAutoSize(true);
+                $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+                $filename =  "followers-list-" . date( 'd-m-Y' ). ".xlsx";
+                // Redirect output to a client’s web browser (Excel2007)
+                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                header('Content-Disposition: attachment;filename="'.$filename.'"');
+                header('Cache-Control: max-age=0');
+                // If you're serving to IE 9, then the following may be needed
+                header('Cache-Control: max-age=1');
+                // If you're serving to IE over SSL, then the following may be needed
+                header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+                header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+                header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+                header ('Pragma: public'); // HTTP/1.0
+
+                $objWriter->save('php://output');
             }
             if($input['format']=='json') {
                 $name = strftime('folowers_%m_%d_%Y.json');
                 header('Content-Disposition: attachment;filename=' . $name);
                 header('Content-Type: application/json');
-                exit(json_encode(['followers'=>$data]));
+                exit(json_encode(['followers'=>$users]));
             }
-            exit(json_encode($followers));
+            // exit(json_encode($followers));
         } else {
             exit(json_encode(['erroor' => 'Invalid handler']));
         }
